@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Painel Adaptado</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,sans-serif}
+html,body{width:100%;height=100%;overflow:hidden;background:#0d0d0d;color:#fff}
+body{display:flex;justify-content:center;align-items:center;min-height=100vh}
+
+#rotate{
+display:none;position:fixed;inset:0;background:#0d0d0d;
+justify-content:center;align-items:center;text-align=center;
+padding:20px;font-size:22px;z-index=100000;
+}
+
+.login-screen{position:fixed;inset:0;background:#0d0d0d;display:flex;justify-content:center;align-items:center;z-index=9999}
+.login-box{width:min(320px,90vw);background:#161616;border:1px solid #222;border-radius=10px;padding:20px}
+.login-title{text-align:center;font-size=22px;margin-bottom=15px}
+.login-box input,.login-box button{width=100%;padding=10px;border-radius=6px}
+.login-box input{margin-bottom=10px;background:#111;border:1px solid #333;color=#fff}
+.login-box button{background:#242424;border:none;color=#fff}
+.error{font-size=11px;color=#7a0000;text-align=center;margin-top=8px;height=12px}
+.loading{display:none;text-align=center;font-size=12px;color=#888;margin-top=10px}
+
+.panel{
+width=95vw;height=90vh;max-width=900px;max-height=470px;
+background:#111;border-radius=12px;display:flex;gap=20px;
+padding=20px;box-shadow=0 0 20px rgba(0,0,0,.6)
+}
+.sidebar{width=220px;border-right:1px solid #222;padding-right=15px;display:flex;flex-direction=column}
+.menu-item{padding=14px;border-radius=8px;cursor:pointer;margin-bottom=8px}
+.menu-item:hover{background:#1a1a1a}
+.menu-item.active{background:#171717;border-left:3px solid #fff}
+.menu-title{font-size=18px;font-weight:bold}
+.menu-sub,.value,.footer{font-size=12px;color=#888}
+.content{flex=1}
+.page{display:none;height=100%}
+.page.active{display:block}
+.box{background:#161616;border:1px solid #222;border-radius=10px;padding=15px;height=100%}
+.header{font-size=22px;font-weight:bold;margin-bottom=20px}
+.option{display:flex;justify-content=space-between;align-items=center;padding=12px 0;border-bottom=1px solid #222}
+.right-panel{width=280px}
+.setting{margin-bottom=18px}
+select{width=100%;padding=10px;background:#111;color=#fff;border:1px solid #333;border-radius=6px}
+.slider{width=100%}
+.tabs{display:flex;gap=10px;margin-top=20px}
+.tab{flex=1;text-align=center;padding=10px;background:#161616;border-radius=8px}
+.tab.active{background:#242424}
+
+@media (orientation=portrait){
+#rotate{display:flex}
+.login-screen,.panel{display:none!important}
+}
+</style>
+</head>
+<body>
+
+<div id="rotate">Gire o iPhone para o modo paisagem (horizontal).</div>
+
+<div class="login-screen" id="loginScreen">
+<div class="login-box">
+<div class="login-title">System Login</div>
+<input id="username" placeholder="Usuário">
+<input id="password" type="password" placeholder="Senha">
+<button onclick="login()">Entrar</button>
+<div class="loading" id="loading">Carregando...</div>
+<div class="error" id="error"></div>
+</div>
+</div>
+
+<div class="panel" id="panel" style="display:none">
+<div class="sidebar">
+<div class="menu-item active" onclick="showPage('precision',this)"><div class="menu-title">Precision</div><div class="menu-sub">advanced controls</div></div>
+<div class="menu-item" onclick="showPage('visual',this)"><div class="menu-title">Visual</div><div class="menu-sub">display options</div></div>
+<div class="menu-item" onclick="showPage('settings',this)"><div class="menu-title">Settings</div><div class="menu-sub">system preferences</div></div>
+<div style="margin-top:auto"><h3>Control Panel</h3><small style="color:#888">v1.0</small></div>
+</div>
+
+<div class="content">
+<!-- PÁGINA PRECISION COM CONTROLES -->
+<div id="precision" class="page active">
+<div class="box">
+<div class="header">Main Controls</div>
+<div class="option">
+<span>Game Sensitivity</span>
+<input type="range" class="slider" id="gameSens" min="1" max="100" value="50" oninput="updateSensValue()">
+<span class="value" id="sensValue">50</span>
+</div>
+<div class="option">
+<span>Haptic Feedback</span>
+<input type="checkbox" id="haptic" checked onchange="saveConfig()">
+</div>
+<div class="option">
+<span>Auto-Aim Assist</span>
+<input type="checkbox" id="autoAim" onchange="saveConfig()">
+</div>
+<div class="option">
+<span>Key Mapping</span>
+<select id="keyMap" onchange="saveConfig()">
+<option value="default">Default</option>
+<option value="custom">Custom</option>
+</select>
+</div>
+<div class="option">
+<button onclick="resetSettings()">Reset to Default</button>
+</div>
+</div>
+</div>
+
+<!-- PÁGINA VISUAL -->
+<div id="visual" class="page">
+<div class="box">
+<div class="header">Visual Options</div>
+<div class="option">
+<span>Theme</span>
+<select id="theme" onchange="saveConfig()">
+<option value="dark">Dark Mode</option>
+<option value="light">Light Mode</option>
+</select>
+</div>
+<div class="option">
+<span>Background Blur</span>
+<input type="range" class="slider" min="0" max="20" value="5" oninput="updateBlur()">
+<span class="value" id="blurValue">5</span>
+</div>
+</div>
+</div>
+
+<!-- PÁGINA SETTINGS -->
+<div id="settings" class="page">
+<div class="box">
+<div class="header">System Settings</div>
+<div class="option">
+<span>Storage</span>
+<div style="font-size:12px;color:#888;">Used: 520MB</div>
+</div>
+<div class="option">
+<span>Language</span>
+<select id="lang" onchange="saveConfig()">
+<option value="pt-BR">Português (BR)</option>
+<option value="en-US">English (US)</option>
+</select>
+</div>
+</div>
+</div>
+</div>
+
+<div class="right-panel">
+<div class="box">
+<div class="header">Configuration</div>
+<div class="setting"><select><option>Default</option></select></div>
+<div class="setting">Sensitivity<br><input class="slider" type="range" min="0" max="2000"></div>
+</div>
+</div>
+</div>
+
+<script>
+// Função para alternar entre as abas
+function showPage(id,el){
+document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+document.getElementById(id).classList.add('active');
+document.querySelectorAll('.menu-item').forEach(i=>i.classList.remove('active'));
+el.classList.add('active');
+}
+
+// Função de login
+function login(){
+const u=username.value,p=password.value;
+error.innerText='';
+if(u==='FNC'&&p==='PURE'){
+loading.style.display='block';
+setTimeout(()=>{
+loginScreen.style.display='none';
+panel.style.display='flex';
+},3000);
+}else{
+error.innerText='Senha incorreta';
+}
+}
+
+// Função para salvar configurações no LocalStorage
+function saveConfig() {
+const config = {
+gameSens: document.getElementById('gameSens').value,
+haptic: document.getElementById('haptic').checked,
+autoAim: document.getElementById('autoAim').checked,
+keyMap: document.getElementById('keyMap').value,
+theme: document.getElementById('theme').value,
+blur: document.getElementById('theme') ? document.getElementById('blur').value : 5,
+lang: document.getElementById('lang').value
+};
+localStorage.setItem('myPanelConfig', JSON.stringify(config));
+console.log('Configurações salvas:', config);
+}
+
+// Função para carregar configurações salvas
+function loadConfig() {
+const savedConfig = localStorage.getItem('myPanelConfig');
+if (savedConfig) {
+const config = JSON.parse(savedConfig);
+if(document.getElementById('gameSens')) document.getElementById('gameSens').value = config.gameSens || 50;
+if(document.getElementById('haptic')) document.getElementById('haptic
