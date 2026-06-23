@@ -1,2 +1,2 @@
-# DLS-PAINEL-VENDAS
+# Painel Pure
 criação e painéis de qualidade
